@@ -19,7 +19,7 @@ http:
 
     # ── Experience Service — public read, protected write ─────────────────────
     experience-public:
-      rule: "PathPrefix(`/api/v1/experiences`) || PathPrefix(`/api/v1/stays`) || PathPrefix(`/api/v1/dining`) || PathPrefix(`/api/v1/spa`)"
+      rule: "PathPrefix(`/api/v1/experiences`) || PathPrefix(`/api/v1/stays`) || PathPrefix(`/api/v1/dining`) || PathPrefix(`/api/v1/spa`) || PathPrefix(`/api/v1/catalog`)"
       entryPoints: [web]
       middlewares: [cors, request-headers, rate-limit-public]
       service: experience-service
