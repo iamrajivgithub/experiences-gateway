@@ -1,0 +1,237 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Traefik Dynamic Configuration — Routes, Middleware, Services
+#  File     : config/routes.yml
+#  Watched  : Yes (auto-reloads on change — no Traefik restart needed)
+#
+#  Structure:
+#    http.routers     — match incoming requests to a service
+#    http.middlewares — transform requests (auth, CORS, rate limit, headers)
+#    http.services    — define upstream microservice endpoints
+# ═══════════════════════════════════════════════════════════════════════════════
+
+http:
+
+  # ── Routers ──────────────────────────────────────────────────────────────────
+  # Each router matches a URL pattern and applies middleware before forwarding.
+  # Priority: more specific rules win (longer prefix = higher priority).
+
+  routers:
+
+    # ── Experience Service — public read, protected write ─────────────────────
+    experience-public:
+      rule: "PathPrefix(`/api/v1/experiences`) || PathPrefix(`/api/v1/stays`) || PathPrefix(`/api/v1/dining`) || PathPrefix(`/api/v1/spa`)"
+      entryPoints: [web]
+      middlewares: [cors, request-headers, rate-limit-public]
+      service: experience-service
+      priority: 10
+
+    # ── Booking Service — always protected ───────────────────────────────────
+    booking:
+      rule: "PathPrefix(`/api/v1/bookings`) || PathPrefix(`/api/v1/payments`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: booking-service
+      priority: 10
+
+    # ── Auth — register is public, no JWT needed ─────────────────────────────
+    auth-public:
+      rule: "PathPrefix(`/api/v1/auth`)"
+      entryPoints: [web]
+      middlewares: [cors, request-headers, rate-limit-public]
+      service: user-service
+      priority: 20
+
+    # ── User Service — always protected ──────────────────────────────────────
+    user:
+      rule: "PathPrefix(`/api/v1/users`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: user-service
+      priority: 10
+
+    # ── Review Service — read public, write protected ─────────────────────────
+    review:
+      rule: "PathPrefix(`/api/v1/reviews`)"
+      entryPoints: [web]
+      middlewares: [cors, request-headers, rate-limit-public]
+      service: review-service
+      priority: 10
+
+    # ── Search Service — public ───────────────────────────────────────────────
+    search:
+      rule: "PathPrefix(`/api/v1/search`)"
+      entryPoints: [web]
+      middlewares: [cors, request-headers, rate-limit-public]
+      service: search-service
+      priority: 10
+
+    # ── Media Service — protected ─────────────────────────────────────────────
+    media:
+      rule: "PathPrefix(`/api/v1/media`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: media-service
+      priority: 10
+
+    # ── Notification Service — protected ──────────────────────────────────────
+    notification:
+      rule: "PathPrefix(`/api/v1/notifications`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: notification-service
+      priority: 10
+
+    # ── Health check — no auth, no rate limit ────────────────────────────────
+    health:
+      rule: "PathPrefix(`/health`)"
+      entryPoints: [web]
+      service: noop@internal
+      priority: 100
+
+  # ── Middleware ────────────────────────────────────────────────────────────────
+  # Middleware is applied in the order listed in the router's middleware array.
+
+  middlewares:
+
+    # ── CORS ──────────────────────────────────────────────────────────────────
+    cors:
+      headers:
+        accessControlAllowOriginList:
+          - "http://localhost:3000"
+          - "http://localhost:3001"
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - "Authorization"
+          - "Content-Type"
+          - "X-Requested-With"
+          - "X-Request-ID"
+        accessControlExposeHeaders:
+          - "X-Request-ID"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 86400
+
+    # ── JWT Authentication (Keycloak) ─────────────────────────────────────────
+    # Validates JWT tokens via Keycloak JWKS endpoint.
+    # Services receive X-Forwarded-User and X-Forwarded-Roles headers.
+    jwt-auth:
+      forwardAuth:
+        address: "http://auth-validator:9000/validate"
+        trustForwardHeader: true
+        authResponseHeaders:
+          - "X-User-ID"          # Keycloak sub (user UUID)
+          - "X-User-Email"       # User email
+          - "X-User-Roles"       # Comma-separated roles
+          - "X-User-Name"        # Full name
+
+    # ── Security Headers ──────────────────────────────────────────────────────
+    request-headers:
+      headers:
+        customRequestHeaders:
+          X-Gateway: "experience-api-gateway"
+          X-Forwarded-Proto: "http"
+        customResponseHeaders:
+          X-Content-Type-Options: "nosniff"
+          X-Frame-Options: "DENY"
+          X-XSS-Protection: "1; mode=block"
+          Referrer-Policy: "strict-origin-when-cross-origin"
+          Cache-Control: "no-store"
+
+    # ── Rate Limiting — public routes ─────────────────────────────────────────
+    rate-limit-public:
+      rateLimit:
+        average: 100            # requests per second
+        burst: 50               # allow short bursts
+        period: 1s
+        sourceCriterion:
+          ipStrategy:
+            depth: 1
+
+    # ── Rate Limiting — authenticated routes ──────────────────────────────────
+    rate-limit-auth:
+      rateLimit:
+        average: 300
+        burst: 100
+        period: 1s
+        sourceCriterion:
+          requestHeaderName: "X-User-ID"   # rate limit per user, not IP
+
+    # ── Strip API prefix (optional — remove if services expect /api/v1) ───────
+    strip-api-prefix:
+      stripPrefix:
+        prefixes:
+          - "/api/v1"
+
+  # ── Services (upstream microservice addresses) ────────────────────────────────
+  # These point to the service hostnames on the shared Docker network.
+  # Change host:port here when migrating to cloud (no router/middleware changes).
+
+  services:
+
+    experience-service:
+      loadBalancer:
+        servers:
+          - url: "http://experience-service:8002"
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
+
+    booking-service:
+      loadBalancer:
+        servers:
+          - url: "http://booking-service:8003"
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
+
+    user-service:
+      loadBalancer:
+        servers:
+          - url: "http://user-service:8004"
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
+
+    review-service:
+      loadBalancer:
+        servers:
+          - url: "http://review-service:8005"
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
+
+    search-service:
+      loadBalancer:
+        servers:
+          - url: "http://search-service:8006"
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
+
+    media-service:
+      loadBalancer:
+        servers:
+          - url: "http://media-service:8007"
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
+
+    notification-service:
+      loadBalancer:
+        servers:
+          - url: "http://notification-service:8008"
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
