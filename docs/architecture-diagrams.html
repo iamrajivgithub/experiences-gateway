@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rarē Platform — Architecture Diagrams</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cormorant+Garamond:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #B8975A;
+      --gold-light: #D4B882;
+      --ink: #0F0F0F;
+      --warm-white: #FAF8F5;
+      --mid-grey: #7A7A7A;
+      --light-grey: #F0EDE8;
+      --border: rgba(0,0,0,0.08);
+      --green: #2D6A4F;
+      --red: #8B2020;
+      --blue: #1A3A5C;
+      --purple: #4A235A;
+      --orange: #7A3B10;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--warm-white);
+      color: var(--ink);
+      padding: 0 0 80px;
+    }
+
+    /* ── Header ── */
+    .page-header {
+      background: var(--ink);
+      padding: 40px 60px;
+      border-bottom: 3px solid var(--gold);
+    }
+    .page-header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 400;
+      color: white;
+      letter-spacing: 0.05em;
+    }
+    .page-header h1 em { color: var(--gold-light); font-style: italic; }
+    .page-header p {
+      color: rgba(255,255,255,0.5);
+      font-size: 13px;
+      margin-top: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Nav tabs ── */
+    .tab-nav {
+      display: flex;
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 0 60px;
+      gap: 0;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .tab-btn {
+      padding: 16px 24px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border: none;
+      background: none;
+      color: var(--mid-grey);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--ink); }
+    .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    /* ── Content ── */
+    .tab-content { display: none; padding: 48px 60px; }
+    .tab-content.active { display: block; }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .section-desc {
+      font-size: 13px;
+      color: var(--mid-grey);
+      line-height: 1.7;
+      margin-bottom: 36px;
+      max-width: 720px;
+    }
+
+    .diagram-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 40px;
+      margin-bottom: 40px;
+      overflow-x: auto;
+    }
+    .diagram-card h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    .diagram-card .card-desc {
+      font-size: 12px;
+      color: var(--mid-grey);
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-bottom: 28px;
+      padding: 16px 20px;
+      background: var(--light-grey);
+      border-radius: 4px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--mid-grey);
+      letter-spacing: 0.05em;
+    }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── Ownership table ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th {
+      background: var(--ink);
+      color: white;
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    tr:hover td { background: var(--light-grey); }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      font-weight: 500;
+      margin: 1px;
+    }
+    .badge-green  { background: #D1FAE5; color: #065F46; }
+    .badge-red    { background: #FEE2E2; color: #991B1B; }
+    .badge-blue   { background: #DBEAFE; color: #1E40AF; }
+    .badge-gold   { background: #FEF3C7; color: #92400E; }
+    .badge-grey   { background: #F3F4F6; color: #374151; }
+    .badge-purple { background: #EDE9FE; color: #5B21B6; }
+
+    /* ── Overlap cards ── */
+    .overlap-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    .overlap-card {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .overlap-card-header {
+      padding: 14px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .overlap-card-header.problem { background: #FEF2F2; color: #991B1B; }
+    .overlap-card-header.solution { background: #F0FDF4; color: #065F46; }
+    .overlap-card-body {
+      padding: 16px 20px;
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--mid-grey);
+    }
+    .overlap-card-body strong { color: var(--ink); }
+
+    /* ── Flow diagram (custom) ── */
+    .flow-diagram {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      font-size: 12px;
+    }
+    .flow-row {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+    }
+    .flow-box {
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+      min-width: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .flow-box small {
+      font-size: 10px;
+      font-weight: 400;
+      opacity: 0.7;
+    }
+    .flow-arrow {
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      color: var(--mid-grey);
+      font-size: 18px;
+    }
+    .flow-arrow-down {
+      display: flex;
+      justify-content: center;
+      color: var(--mid-grey);
+      font-size: 18px;
+      padding: 4px 0;
+    }
+
+    /* Mermaid overrides */
+    .mermaid { text-align: center; }
+
+    @media (max-width: 900px) {
+      .tab-content { padding: 28px 20px; }
+      .page-header { padding: 28px 20px; }
+      .tab-nav { padding: 0 20px; overflow-x: auto; }
+      .overlap-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Rarē Platform — <em>Architecture Diagrams</em></h1>
+  <p>Service map · API ownership · Data flow · Overlap resolutions</p>
+</div>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('request-flow')">Request Flow</button>
+  <button class="tab-btn" onclick="showTab('service-map')">Service Map</button>
+  <button class="tab-btn" onclick="showTab('data-ownership')">Data Ownership</button>
+  <button class="tab-btn" onclick="showTab('api-table')">Full API Table</button>
+  <button class="tab-btn" onclick="showTab('overlaps')">Overlap Resolutions</button>
+  <button class="tab-btn" onclick="showTab('comms')">Service Comms</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 1: REQUEST FLOW                                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="tab-content active" id="tab-request-flow">
+  <p class="section-label">Tab 1</p>
+  <h2 class="section-title">Request Flow</h2>
+  <p class="section-desc">How a request travels from the client browser through the gateway to a microservice. Two paths: public (no token) and protected (JWT required).</p>
+
+  <div class="diagram-card">
+    <h3>Public Route — Browse Experiences</h3>
+    <p class="card-desc">Client requests experiences list. No token needed. Gateway applies CORS + rate limiting then forwards directly.</p>
+    <div class="mermaid">
+sequenceDiagram
+    participant C as Client Browser
+    participant T as Traefik Gateway :80
+    participant E as experience-service :8002
+    participant M as MongoDB
+
+    C->>T: GET /api/v1/experiences?category=stay
+    Note over T: Apply middleware:<br/>CORS ✓<br/>Rate limit (100/s by IP) ✓<br/>Add X-Gateway header ✓
+    T->>E: GET /api/v1/experiences?category=stay<br/>X-Gateway: experience-api-gateway
+    E->>M: db.experiences.find({category:"stay", is_active:true})
+    M-->>E: [ ...experience documents ]
+    E-->>T: 200 { data: [...], total: 42, page: 1 }
+    T-->>C: 200 { data: [...], total: 42, page: 1 }
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h3>Protected Route — Create Booking</h3>
+    <p class="card-desc">Client sends JWT. Gateway calls auth-validator before forwarding. Service receives user identity via headers — never re-validates the token.</p>
+    <div class="mermaid">
+sequenceDiagram
+    participant C as Client Browser
+    participant T as Traefik Gateway :80
+    participant A as auth-validator :9100
+    participant KC as Keycloak :8080
+    participant B as booking-service :8003
+    participant PG as PostgreSQL
+
+    C->>T: POST /api/v1/bookings<br/>Authorization: Bearer eyJhbG...
+
+    Note over T: Route matches bookings router<br/>Middleware: jwt-auth (forwardAuth)
+
+    T->>A: POST /validate<br/>Authorization: Bearer eyJhbG...
+    A->>KC: GET /realms/experience/protocol/openid-connect/certs (JWKS cached 5min)
+    KC-->>A: { keys: [...] }
+    A-->>T: 200<br/>X-User-ID: uuid<br/>X-User-Email: user@mail.com<br/>X-User-Roles: member<br/>X-User-Name: John Doe
+
+    T->>B: POST /api/v1/bookings<br/>X-User-ID: uuid ← no token needed<br/>X-User-Roles: member
+    B->>PG: INSERT INTO bookings...
+    PG-->>B: booking row
+    B-->>T: 201 { booking_id: "...", status: "pending" }
+    T-->>C: 201 { booking_id: "...", status: "pending" }
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h3>Rejected Request — Invalid / Missing Token</h3>
+    <p class="card-desc">auth-validator rejects bad tokens before the request ever reaches the microservice.</p>
+    <div class="mermaid">
+sequenceDiagram
+    participant C as Client Browser
+    participant T as Traefik Gateway :80
+    participant A as auth-validator :9100
+
+    C->>T: GET /api/v1/bookings<br/>Authorization: Bearer expired-token
+
+    T->>A: GET /validate<br/>Authorization: Bearer expired-token
+    Note over A: JWT decode fails<br/>ExpiredSignatureError
+    A-->>T: 401 Token expired
+
+    T-->>C: 401 Unauthorized
+    Note over C: booking-service never receives the request
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 2: SERVICE MAP                                         -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-service-map">
+  <p class="section-label">Tab 2</p>
+  <h2 class="section-title">Service Map</h2>
+  <p class="section-desc">All 7 microservices, their ports, database connections, and which are reachable from outside the platform.</p>
+
+  <div class="diagram-card">
+    <h3>Platform Overview</h3>
+    <p class="card-desc">External traffic enters only through the gateway. Databases are never exposed to services outside their owning service.</p>
+    <div class="mermaid">
+graph TB
+    subgraph EXTERNAL["🌐 External"]
+        CLIENT["Client Browser"]
+        KC["Keycloak :8080\nIdentity Provider"]
+    end
+
+    subgraph GATEWAY["🔀 API Gateway (experience_network)"]
+        TR["Traefik :80\nRouting · CORS · Rate Limit"]
+        AV["auth-validator :9100\nJWT Validation"]
+    end
+
+    subgraph SERVICES["⚙️ Microservices (experience_network)"]
+        direction LR
+        ES["experience-service\n:8002"]
+        BK["booking-service\n:8003"]
+        US["user-service\n:8004"]
+        RV["review-service\n:8005"]
+        SR["search-service\n:8006"]
+        MD["media-service\n:8007"]
+        NT["notification-service\n:8008"]
+    end
+
+    subgraph DATABASES["🗄️ Data Layer"]
+        MG["MongoDB\n:27017\nexperiences · catalogs"]
+        PG["PostgreSQL\n:5432\nusers · bookings · reviews · memberships · availability"]
+        RD["Redis\n:6379\nsearch cache · sessions"]
+        MN["MinIO\n:9000\nimages · documents"]
+        EL["Elasticsearch\n:9200\nfull-text index"]
+    end
+
+    CLIENT -->|"HTTP :80"| TR
+    TR <-->|forwardAuth| AV
+    AV <-->|JWKS| KC
+
+    TR -->|"public"| ES
+    TR -->|"jwt-auth"| BK
+    TR -->|"jwt-auth"| US
+    TR -->|"public"| RV
+    TR -->|"public"| SR
+    TR -->|"jwt-auth"| MD
+    TR -->|"jwt-auth"| NT
+
+    ES --> MG
+    BK --> PG
+    US --> PG
+    US --> KC
+    RV --> PG
+    RV -.->|"update rating"| MG
+    SR --> MG
+    SR --> RD
+    SR -.->|optional| EL
+    MD --> MN
+
+    classDef gateway fill:#B8975A,stroke:#9e7e48,color:white
+    classDef service fill:#1A3A5C,stroke:#0f2640,color:white
+    classDef db fill:#2D6A4F,stroke:#1a4a35,color:white
+    classDef external fill:#4A235A,stroke:#31173b,color:white
+    classDef validator fill:#7A3B10,stroke:#5a2b08,color:white
+
+    class TR gateway
+    class AV validator
+    class ES,BK,US,RV,SR,MD,NT service
+    class MG,PG,RD,MN,EL db
+    class CLIENT,KC external
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 3: DATA OWNERSHIP                                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-data-ownership">
+  <p class="section-label">Tab 3</p>
+  <h2 class="section-title">Data Ownership</h2>
+  <p class="section-desc">Each database table or collection is owned by exactly one service. Only the owning service writes to it. Other services read via API calls or agreed shared fields.</p>
+
+  <div class="diagram-card">
+    <h3>Ownership Map</h3>
+    <div class="mermaid">
+graph LR
+    subgraph MONGO["MongoDB"]
+        MC1["experiences"]
+        MC2["catalogs"]
+    end
+
+    subgraph POSTGRES["PostgreSQL"]
+        PC1["users"]
+        PC2["bookings"]
+        PC3["reviews"]
+        PC4["memberships"]
+        PC5["availability"]
+    end
+
+    subgraph MINIO["MinIO"]
+        MN1["rare-experiences"]
+        MN2["rare-thumbnails"]
+        MN3["rare-avatars"]
+        MN4["rare-documents"]
+        MN5["rare-catalog"]
+    end
+
+    subgraph REDIS["Redis"]
+        RD1["search_cache:*"]
+        RD2["session:*"]
+    end
+
+    ES["experience-service"] -->|owns| MC1
+    ES -->|owns| MC2
+
+    BK["booking-service"] -->|owns| PC2
+    BK -->|owns| PC5
+
+    US["user-service"] -->|owns| PC1
+    US -->|owns| PC4
+
+    RV["review-service"] -->|owns| PC3
+    RV -->|writes rating back| MC1
+
+    MD["media-service"] -->|owns| MN1
+    MD -->|owns| MN2
+    MD -->|owns| MN3
+    MD -->|owns| MN4
+    MD -->|owns| MN5
+
+    SR["search-service"] -->|owns| RD1
+
+    classDef service fill:#1A3A5C,stroke:#0f2640,color:white
+    classDef write fill:#2D6A4F,stroke:#1a4a35,color:white
+    class ES,BK,US,RV,MD,SR service
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h3>Who Can Read What</h3>
+    <p class="card-desc">Read access is more permissive — but writes always go through the owning service.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>Writes (owns)</th>
+          <th>Reads directly</th>
+          <th>Never touches</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>experience-service</strong></td>
+          <td>
+            <span class="badge badge-green">MongoDB experiences</span>
+            <span class="badge badge-green">MongoDB catalogs</span>
+          </td>
+          <td><span class="badge badge-blue">MongoDB experiences</span><span class="badge badge-blue">MongoDB catalogs</span></td>
+          <td><span class="badge badge-red">PostgreSQL</span><span class="badge badge-red">availability</span></td>
+        </tr>
+        <tr>
+          <td><strong>booking-service</strong></td>
+          <td>
+            <span class="badge badge-green">PG bookings</span>
+            <span class="badge badge-green">PG availability</span>
+          </td>
+          <td><span class="badge badge-blue">PG bookings</span><span class="badge badge-blue">PG availability</span></td>
+          <td><span class="badge badge-red">MongoDB</span></td>
+        </tr>
+        <tr>
+          <td><strong>user-service</strong></td>
+          <td>
+            <span class="badge badge-green">PG users</span>
+            <span class="badge badge-green">PG memberships</span>
+            <span class="badge badge-green">Keycloak users</span>
+          </td>
+          <td><span class="badge badge-blue">PG users</span><span class="badge badge-blue">PG memberships</span></td>
+          <td><span class="badge badge-red">MongoDB</span><span class="badge badge-red">availability</span></td>
+        </tr>
+        <tr>
+          <td><strong>review-service</strong></td>
+          <td>
+            <span class="badge badge-green">PG reviews</span>
+            <span class="badge badge-gold">MongoDB rating_avg ← special</span>
+          </td>
+          <td><span class="badge badge-blue">PG reviews</span></td>
+          <td><span class="badge badge-red">availability</span><span class="badge badge-red">bookings (only ID)</span></td>
+        </tr>
+        <tr>
+          <td><strong>search-service</strong></td>
+          <td><span class="badge badge-green">Redis cache</span></td>
+          <td>
+            <span class="badge badge-blue">MongoDB experiences</span>
+            <span class="badge badge-blue">Elasticsearch</span>
+            <span class="badge badge-blue">Redis cache</span>
+          </td>
+          <td><span class="badge badge-red">PostgreSQL</span><span class="badge badge-red">MinIO</span></td>
+        </tr>
+        <tr>
+          <td><strong>media-service</strong></td>
+          <td><span class="badge badge-green">All MinIO buckets</span></td>
+          <td><span class="badge badge-blue">MinIO</span></td>
+          <td><span class="badge badge-red">PostgreSQL</span><span class="badge badge-red">MongoDB</span></td>
+        </tr>
+        <tr>
+          <td><strong>notification-service</strong></td>
+          <td><span class="badge badge-grey">SMTP only (stateless)</span></td>
+          <td><span class="badge badge-grey">None</span></td>
+          <td><span class="badge badge-red">All databases</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 4: FULL API TABLE                                      -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-api-table">
+  <p class="section-label">Tab 4</p>
+  <h2 class="section-title">Full API Table</h2>
+  <p class="section-desc">Every endpoint across all 7 services with method, auth requirement, and owning data store.</p>
+
+  <div class="diagram-card">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#065F46"></div> Public — No auth</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1E40AF"></div> Protected — Any valid JWT</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#7C3AED"></div> Admin only — role=admin</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#92400E"></div> Internal — not exposed via gateway</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Service</th><th>Method</th><th>Endpoint</th><th>Auth</th><th>DB</th></tr>
+      </thead>
+      <tbody>
+
+        <!-- experience-service -->
+        <tr><td rowspan="17" style="font-weight:600;vertical-align:top;padding-top:16px;border-right:3px solid #B8975A">experience<br/>-service<br/><span style="font-size:10px;color:#7A7A7A">:8002</span></td>
+            <td>GET</td><td>/api/v1/experiences</td><td><span class="badge badge-green">Public</span></td><td>MongoDB</td></tr>
+        <tr><td>GET</td><td>/api/v1/experiences/{id}</td><td><span class="badge badge-green">Public</span></td><td>MongoDB</td></tr>
+        <tr><td>POST</td><td>/api/v1/experiences</td><td><span class="badge badge-purple">Admin</span></td><td>MongoDB</td></tr>
+        <tr><td>PUT</td><td>/api/v1/experiences/{id}</td><td><span class="badge badge-purple">Admin</span></td><td>MongoDB</td></tr>
+        <tr><td>PATCH</td><td>/api/v1/experiences/{id}</td><td><span class="badge badge-purple">Admin</span></td><td>MongoDB</td></tr>
+        <tr><td>DELETE</td><td>/api/v1/experiences/{id}</td><td><span class="badge badge-purple">Admin</span></td><td>MongoDB</td></tr>
+        <tr><td>GET</td><td>/api/v1/stays</td><td><span class="badge badge-green">Public</span></td><td>MongoDB</td></tr>
+        <tr><td>GET</td><td>/api/v1/stays/{id}</td><td><span class="badge badge-green">Public</span></td><td>MongoDB</td></tr>
+        <tr><td>POST/PUT/PATCH/DELETE</td><td>/api/v1/stays/{id}</td><td><span class="badge badge-purple">Admin</span></td><td>MongoDB</td></tr>
+        <tr><td>GET</td><td>/api/v1/dining</td><td><span class="badge badge-green">Public</span></td><td>MongoDB</td></tr>
+        <tr><td>GET</td><td>/api/v1/dining/{id}</td><td><span class="badge badge-green">Public</span></td><td>MongoDB</td></tr>
+        <tr><td>POST/PUT/PATCH/DELETE</td><td>/api/v1/dining/{id}</td><td><span class="badge badge-purple">Admin</span></td><td>MongoDB</td></tr>
+        <tr><td>GET</td><td>/api/v1/spa</td><td><span class="badge badge-green">Public</span></td><td>MongoDB</td></tr>
+        <tr><td>GET</td><td>/api/v1/spa/{id}</td><td><span class="badge badge-green">Public</span></td><td>MongoDB</td></tr>
+        <tr><td>POST/PUT/PATCH/DELETE</td><td>/api/v1/spa/{id}</td><td><span class="badge badge-purple">Admin</span></td><td>MongoDB</td></tr>
+        <tr><td>GET</td><td>/api/v1/catalog</td><td><span class="badge badge-green">Public</span></td><td>MongoDB</td></tr>
+        <tr><td>GET</td><td>/api/v1/catalog/featured</td><td><span class="badge badge-green">Public</span></td><td>MongoDB</td></tr>
+
+        <!-- booking-service -->
+        <tr><td rowspan="9" style="font-weight:600;vertical-align:top;padding-top:16px;border-right:3px solid #1A3A5C">booking<br/>-service<br/><span style="font-size:10px;color:#7A7A7A">:8003</span></td>
+            <td>POST</td><td>/api/v1/bookings</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+        <tr><td>GET</td><td>/api/v1/bookings/mine</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+        <tr><td>GET</td><td>/api/v1/bookings/{id}</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+        <tr><td>PATCH</td><td>/api/v1/bookings/{id}/cancel</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+        <tr><td>GET</td><td>/api/v1/bookings</td><td><span class="badge badge-purple">Admin</span></td><td>PostgreSQL</td></tr>
+        <tr><td>GET</td><td>/api/v1/experiences/{id}/availability</td><td><span class="badge badge-green">Public</span></td><td>PostgreSQL</td></tr>
+        <tr><td>POST</td><td>/api/v1/payments/initiate</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+        <tr><td>POST</td><td>/api/v1/payments/confirm</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+        <tr><td>GET</td><td>/api/v1/payments/{booking_id}</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+
+        <!-- user-service -->
+        <tr><td rowspan="8" style="font-weight:600;vertical-align:top;padding-top:16px;border-right:3px solid #2D6A4F">user<br/>-service<br/><span style="font-size:10px;color:#7A7A7A">:8004</span></td>
+            <td>POST</td><td>/api/v1/auth/register</td><td><span class="badge badge-green">Public</span></td><td>PG + Keycloak</td></tr>
+        <tr><td>GET</td><td>/api/v1/users/me</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+        <tr><td>PATCH</td><td>/api/v1/users/me</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+        <tr><td>DELETE</td><td>/api/v1/users/me</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+        <tr><td>GET</td><td>/api/v1/users/me/wishlist</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+        <tr><td>POST</td><td>/api/v1/users/me/wishlist/{id}</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+        <tr><td>DELETE</td><td>/api/v1/users/me/wishlist/{id}</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+        <tr><td>GET/POST</td><td>/api/v1/users/me/membership</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+
+        <!-- review-service -->
+        <tr><td rowspan="5" style="font-weight:600;vertical-align:top;padding-top:16px;border-right:3px solid #7A3B10">review<br/>-service<br/><span style="font-size:10px;color:#7A7A7A">:8005</span></td>
+            <td>GET</td><td>/api/v1/reviews?experience_id={id}</td><td><span class="badge badge-green">Public</span></td><td>PostgreSQL</td></tr>
+        <tr><td>GET</td><td>/api/v1/reviews/summary/{experience_id}</td><td><span class="badge badge-green">Public</span></td><td>MongoDB</td></tr>
+        <tr><td>POST</td><td>/api/v1/reviews</td><td><span class="badge badge-blue">JWT</span></td><td>PostgreSQL</td></tr>
+        <tr><td>PATCH</td><td>/api/v1/reviews/{id}/approve</td><td><span class="badge badge-purple">Admin</span></td><td>PG + MongoDB</td></tr>
+        <tr><td>DELETE</td><td>/api/v1/reviews/{id}</td><td><span class="badge badge-purple">Admin</span></td><td>PostgreSQL</td></tr>
+
+        <!-- search-service -->
+        <tr><td rowspan="1" style="font-weight:600;vertical-align:top;padding-top:16px;border-right:3px solid #4A235A">search<br/>-service<br/><span style="font-size:10px;color:#7A7A7A">:8006</span></td>
+            <td>GET</td><td>/api/v1/search?q=&city=&min_price=&max_price=&category=</td><td><span class="badge badge-green">Public</span></td><td>MongoDB + Redis</td></tr>
+
+        <!-- media-service -->
+        <tr><td rowspan="3" style="font-weight:600;vertical-align:top;padding-top:16px;border-right:3px solid #065F46">media<br/>-service<br/><span style="font-size:10px;color:#7A7A7A">:8007</span></td>
+            <td>POST</td><td>/api/v1/media/upload</td><td><span class="badge badge-blue">JWT</span></td><td>MinIO</td></tr>
+        <tr><td>GET</td><td>/api/v1/media/{id}</td><td><span class="badge badge-blue">JWT</span></td><td>MinIO</td></tr>
+        <tr><td>DELETE</td><td>/api/v1/media/{id}</td><td><span class="badge badge-purple">Admin</span></td><td>MinIO</td></tr>
+
+        <!-- notification-service -->
+        <tr><td rowspan="2" style="font-weight:600;vertical-align:top;padding-top:16px;border-right:3px solid #991B1B">notification<br/>-service<br/><span style="font-size:10px;color:#7A7A7A">:8008</span></td>
+            <td>POST</td><td>/api/v1/notifications/send</td><td><span class="badge badge-gold">Internal</span></td><td>SMTP only</td></tr>
+        <tr><td>GET</td><td>/api/v1/notifications/me</td><td><span class="badge badge-blue">JWT</span></td><td>SMTP only</td></tr>
+
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 5: OVERLAP RESOLUTIONS                                 -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-overlaps">
+  <p class="section-label">Tab 5</p>
+  <h2 class="section-title">Overlap Resolutions</h2>
+  <p class="section-desc">Six design tensions identified during brainstorm — and the agreed resolution for each.</p>
+
+  <!-- Overlap 1 -->
+  <div class="diagram-card">
+    <h3>1 — Availability endpoint ownership</h3>
+    <p class="card-desc">Availability data lives in PostgreSQL (booking-service domain) but is needed when viewing an experience detail page.</p>
+    <div class="mermaid">
+graph LR
+    FE["Frontend"] -->|"GET /api/v1/experiences/abc"| ES["experience-service\n:8002\n(MongoDB)"]
+    FE -->|"GET /api/v1/experiences/abc/availability"| BK["booking-service\n:8003\n(PostgreSQL)"]
+    ES -->|"200 { title, images, price... }"| FE
+    BK -->|"200 { available_dates: [...] }"| FE
+
+    style BK fill:#1A3A5C,color:white
+    style ES fill:#1A3A5C,color:white
+    </div>
+    <div class="overlap-grid" style="margin-top:20px">
+      <div class="overlap-card">
+        <div class="overlap-card-header problem">❌ Rejected approach</div>
+        <div class="overlap-card-body">experience-service internally calls booking-service to merge data. Creates <strong>runtime coupling</strong> — if booking-service is down, experience detail pages break.</div>
+      </div>
+      <div class="overlap-card">
+        <div class="overlap-card-header solution">✅ Agreed resolution</div>
+        <div class="overlap-card-body">Two separate calls from the frontend. booking-service owns <strong>GET /api/v1/experiences/{id}/availability</strong>. Clean boundary, independent failure modes.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlap 2 -->
+  <div class="diagram-card">
+    <h3>2 — Rating data on experience cards</h3>
+    <p class="card-desc">Experience list needs rating + review_count per card. Reviews live in review-service (PostgreSQL), experiences in experience-service (MongoDB).</p>
+    <div class="mermaid">
+sequenceDiagram
+    participant Admin
+    participant RV as review-service
+    participant PG as PostgreSQL reviews
+    participant MG as MongoDB experiences
+
+    Admin->>RV: PATCH /api/v1/reviews/{id}/approve
+    RV->>PG: UPDATE reviews SET approved=true
+    RV->>MG: UPDATE experiences SET rating_avg=4.97, review_count=143
+    Note over MG: rating_avg and review_count<br/>stored directly on experience doc
+    RV-->>Admin: 200 OK
+
+    Note over MG: experience-service reads these<br/>fields on GET — no extra call needed
+    </div>
+    <div class="overlap-grid" style="margin-top:20px">
+      <div class="overlap-card">
+        <div class="overlap-card-header problem">❌ Rejected approach</div>
+        <div class="overlap-card-body">experience-service calls review-service on every list request to aggregate ratings. <strong>N+1 problem</strong> — 12 cards = 12 calls to review-service.</div>
+      </div>
+      <div class="overlap-card">
+        <div class="overlap-card-header solution">✅ Agreed resolution</div>
+        <div class="overlap-card-body">review-service writes <strong>rating_avg</strong> and <strong>review_count</strong> back to MongoDB when a review is approved. experience-service reads them as plain fields. Zero inter-service calls at read time.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlap 3 -->
+  <div class="diagram-card">
+    <h3>3 — Wishlist enrichment</h3>
+    <p class="card-desc">Wishlist is a list of experience IDs stored in PostgreSQL (user-service). Frontend needs titles and images to display the list.</p>
+    <div class="mermaid">
+sequenceDiagram
+    participant FE as Frontend
+    participant US as user-service :8004
+    participant ES as experience-service :8002
+
+    FE->>US: GET /api/v1/users/me/wishlist
+    US-->>FE: 200 { items: [ { id: "abc", title: "Villa Paradiso", image_url: "...", price: 4200 } ] }
+    Note over US: Returns cached snapshot<br/>stored in wishlist_cache JSONB column
+
+    FE->>ES: GET /api/v1/experiences/abc (optional — for full detail)
+    ES-->>FE: 200 { full experience object }
+    </div>
+    <div class="overlap-grid" style="margin-top:20px">
+      <div class="overlap-card">
+        <div class="overlap-card-header problem">❌ Rejected approach</div>
+        <div class="overlap-card-body">user-service calls experience-service internally to enrich wishlist items. Tight coupling, slower response.</div>
+      </div>
+      <div class="overlap-card">
+        <div class="overlap-card-header solution">✅ Agreed resolution</div>
+        <div class="overlap-card-body">user-service stores a <strong>wishlist_cache JSONB</strong> field (title + image_url + price) written at save time. Returns snapshot instantly. Frontend calls experience-service only when user opens full detail.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlap 4 -->
+  <div class="diagram-card">
+    <h3>4 — Search vs experience-service</h3>
+    <p class="card-desc">Both services query the MongoDB experiences collection. Is search-service redundant?</p>
+    <div class="overlap-grid">
+      <div class="overlap-card">
+        <div class="overlap-card-header problem">experience-service scope</div>
+        <div class="overlap-card-body"><strong>Structured browse</strong> — category tabs, known filters (city, price range), pagination. Simple find() queries on indexed fields.</div>
+      </div>
+      <div class="overlap-card">
+        <div class="overlap-card-header solution">search-service scope</div>
+        <div class="overlap-card-body"><strong>Free-text + fuzzy</strong> — "romantic cliffside" → matches title, tagline, description, amenities. Geo radius, Redis caching, cross-field scoring. Cannot be replaced by a simple MongoDB filter.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlap 5 -->
+  <div class="diagram-card">
+    <h3>5 — Notification triggers</h3>
+    <p class="card-desc">Who is responsible for sending emails on booking confirmed, booking cancelled, review approved?</p>
+    <div class="mermaid">
+graph LR
+    BK["booking-service"] -->|"POST /api/v1/notifications/send\n{ type: booking_confirmed, user_id, data }"| NT["notification-service"]
+    RV["review-service"] -->|"POST /api/v1/notifications/send\n{ type: review_approved, user_id, data }"| NT
+    NT -->|SMTP| EMAIL["User Email"]
+
+    style NT fill:#991B1B,color:white
+    style BK fill:#1A3A5C,color:white
+    style RV fill:#1A3A5C,color:white
+    </div>
+    <div class="overlap-grid" style="margin-top:20px">
+      <div class="overlap-card">
+        <div class="overlap-card-header problem">❌ Rejected approach</div>
+        <div class="overlap-card-body">Each service implements its own email sending. Duplicate SMTP config, duplicate templates, no central audit trail.</div>
+      </div>
+      <div class="overlap-card">
+        <div class="overlap-card-header solution">✅ Agreed resolution</div>
+        <div class="overlap-card-body">notification-service is the only service with SMTP config. Other services fire-and-forget to <strong>POST /notifications/send</strong>. Internal endpoint — not exposed via gateway to clients.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlap 6 -->
+  <div class="diagram-card">
+    <h3>6 — User registration (Keycloak + PostgreSQL)</h3>
+    <p class="card-desc">Registration must create a Keycloak user AND a PostgreSQL user record atomically. Which service owns this?</p>
+    <div class="mermaid">
+sequenceDiagram
+    participant FE as Frontend
+    participant US as user-service :8004
+    participant KC as Keycloak
+    participant PG as PostgreSQL
+
+    FE->>US: POST /api/v1/auth/register { name, email, password }
+    US->>KC: Admin API — create user in experience realm
+    KC-->>US: 201 { keycloak_id: "uuid" }
+    US->>PG: INSERT INTO users (id=keycloak_id, email, name...)
+    PG-->>US: user row
+    US-->>FE: 201 { user created — please login via Keycloak }
+    </div>
+    <div class="overlap-grid" style="margin-top:20px">
+      <div class="overlap-card">
+        <div class="overlap-card-header problem">❌ Rejected approach</div>
+        <div class="overlap-card-body">Separate register call to Keycloak from frontend + separate API call to user-service. Race condition risk — Keycloak user created but PostgreSQL record fails.</div>
+      </div>
+      <div class="overlap-card">
+        <div class="overlap-card-header solution">✅ Agreed resolution</div>
+        <div class="overlap-card-body">user-service owns registration. Creates Keycloak user via Admin API first, then writes PostgreSQL record. Uses Keycloak UUID as the shared key. Login always goes directly to Keycloak token endpoint.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 6: SERVICE COMMS                                       -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="tab-content" id="tab-comms">
+  <p class="section-label">Tab 6</p>
+  <h2 class="section-title">Service-to-Service Communication</h2>
+  <p class="section-desc">Which services call each other directly, and what the call looks like. Minimal coupling — most services operate independently.</p>
+
+  <div class="diagram-card">
+    <h3>Communication Matrix</h3>
+    <div class="mermaid">
+graph TD
+    subgraph ASYNC["Direct HTTP calls (fire-and-forget)"]
+        BK2["booking-service"] -->|"POST /notifications/send\nbooking_confirmed / booking_cancelled"| NT2["notification-service"]
+        RV2["review-service"] -->|"POST /notifications/send\nreview_approved"| NT2
+        RV2 -->|"UPDATE experiences\nrating_avg + review_count"| MG2["MongoDB\n(direct write)"]
+    end
+
+    subgraph ISOLATED["Services with NO outbound calls"]
+        ES2["experience-service\n✓ fully isolated"]
+        US2["user-service\n✓ only calls Keycloak Admin API"]
+        SR2["search-service\n✓ reads MongoDB + Redis directly"]
+        MD2["media-service\n✓ reads/writes MinIO only"]
+    end
+
+    style NT2 fill:#991B1B,color:white
+    style BK2 fill:#1A3A5C,color:white
+    style RV2 fill:#1A3A5C,color:white
+    style ES2 fill:#2D6A4F,color:white
+    style US2 fill:#2D6A4F,color:white
+    style SR2 fill:#2D6A4F,color:white
+    style MD2 fill:#2D6A4F,color:white
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h3>Full Booking Journey — cross-service flow</h3>
+    <p class="card-desc">The most complex user journey: browsing → booking → payment → confirmation email.</p>
+    <div class="mermaid">
+sequenceDiagram
+    participant FE as Frontend
+    participant GW as Gateway
+    participant ES as experience-service
+    participant BK as booking-service
+    participant NT as notification-service
+
+    FE->>GW: GET /api/v1/experiences/abc
+    GW->>ES: forward (public)
+    ES-->>FE: experience detail { title, price, images }
+
+    FE->>GW: GET /api/v1/experiences/abc/availability?month=2026-07
+    GW->>BK: forward (public — no token needed)
+    BK-->>FE: { available_dates: ["2026-07-10", "2026-07-11"...] }
+
+    FE->>GW: POST /api/v1/bookings (with JWT)
+    GW->>GW: forwardAuth → auth-validator → 200 X-User-ID
+    GW->>BK: forward + X-User-ID header
+    BK->>BK: check availability slot
+    BK->>BK: reserve slot (availability.slots_booked++)
+    BK->>BK: create booking (status=pending)
+    BK-->>FE: 201 { booking_id, status: pending }
+
+    FE->>GW: POST /api/v1/payments/initiate (with JWT)
+    GW->>BK: forward
+    BK-->>FE: { payment_url: "https://stripe/..." }
+
+    Note over FE: User completes payment on Stripe
+
+    FE->>GW: POST /api/v1/payments/confirm (with JWT)
+    GW->>BK: forward
+    BK->>BK: UPDATE booking status=confirmed
+    BK->>NT: POST /notifications/send { type: booking_confirmed }
+    NT->>NT: send confirmation email
+    BK-->>FE: 200 { status: confirmed }
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h3>Review Submission — cross-service flow</h3>
+    <p class="card-desc">Review requires a completed booking. Approval updates MongoDB rating in place.</p>
+    <div class="mermaid">
+sequenceDiagram
+    participant FE as Frontend
+    participant GW as Gateway
+    participant RV as review-service
+    participant MG as MongoDB
+
+    FE->>GW: POST /api/v1/reviews { experience_id, booking_id, rating, body } + JWT
+    GW->>RV: forward + X-User-ID header
+    RV->>RV: verify booking_id belongs to X-User-ID
+    RV->>RV: verify booking status = completed
+    RV->>RV: INSERT review (approved=false)
+    RV-->>FE: 201 { review pending moderation }
+
+    Note over RV: Admin approves later
+
+    GW->>RV: PATCH /api/v1/reviews/{id}/approve + Admin JWT
+    RV->>RV: UPDATE reviews SET approved=true
+    RV->>MG: UPDATE experiences SET rating_avg=new_avg, review_count++
+    Note over MG: experience-service reads<br/>this on next GET — no extra call
+    RV-->>GW: 200 OK
+    </div>
+  </div>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#1A3A5C',
+      primaryTextColor: '#ffffff',
+      primaryBorderColor: '#0f2640',
+      lineColor: '#B8975A',
+      secondaryColor: '#2D6A4F',
+      tertiaryColor: '#FAF8F5',
+      background: '#FAF8F5',
+      mainBkg: '#1A3A5C',
+      nodeBorder: '#0f2640',
+      clusterBkg: '#F0EDE8',
+      titleColor: '#0F0F0F',
+      edgeLabelBackground: '#FAF8F5',
+      actorBkg: '#1A3A5C',
+      actorBorder: '#B8975A',
+      actorTextColor: '#ffffff',
+      actorLineColor: '#B8975A',
+      signalColor: '#0F0F0F',
+      signalTextColor: '#0F0F0F',
+      labelBoxBkgColor: '#F0EDE8',
+      labelBoxBorderColor: '#B8975A',
+      labelTextColor: '#0F0F0F',
+      loopTextColor: '#0F0F0F',
+      noteBorderColor: '#B8975A',
+      noteBkgColor: '#FEF3C7',
+      noteTextColor: '#0F0F0F',
+      activationBorderColor: '#B8975A',
+      activationBkgColor: '#FEF3C7',
+      sequenceNumberColor: '#ffffff',
+      fontSize: '13px'
+    }
+  });
+
+  function showTab(id) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    event.target.classList.add('active');
+    // Re-render mermaid in newly visible tab
+    mermaid.run({ querySelector: '#tab-' + id + ' .mermaid' });
+  }
+</script>
+</body>
+</html>

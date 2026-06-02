@@ -81,6 +81,22 @@ http:
       service: notification-service
       priority: 10
 
+    # ── Lookup Service — public country/city + feature flags read ─────────────
+    lookup-public:
+      rule: "PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/features`)"
+      entryPoints: [web]
+      middlewares: [cors, request-headers, rate-limit-public]
+      service: lookup-service
+      priority: 10
+
+    # ── Lookup Service — admin (features + country/city management) ───────────
+    lookup-admin:
+      rule: "PathPrefix(`/api/v1/admin/features`) || PathPrefix(`/api/v1/admin/lookup`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: lookup-service
+      priority: 20
+
     # ── Health check — no auth, no rate limit ────────────────────────────────
     health:
       rule: "PathPrefix(`/health`)"
@@ -231,6 +247,15 @@ http:
       loadBalancer:
         servers:
           - url: "http://notification-service:8008"
+        healthCheck:
+          path: /health
+          interval: 10s
+          timeout: 3s
+
+    lookup-service:
+      loadBalancer:
+        servers:
+          - url: "http://lookup-service:8009"
         healthCheck:
           path: /health
           interval: 10s

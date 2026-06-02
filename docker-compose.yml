@@ -1,0 +1,66 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Experience API Gateway — Docker Compose
+#  Tool    : Traefik v3.x
+#  Port    : 80  (all API traffic)
+#            8090 (Traefik dashboard)
+#
+#  Start   : docker compose --env-file .env up -d
+#  Dashboard: http://localhost:8090/dashboard/
+# ═══════════════════════════════════════════════════════════════════════════════
+
+services:
+
+  # ── Traefik API Gateway ────────────────────────────────────────────────────
+  traefik:
+    image: traefik:v3.1
+    container_name: experience_api_gateway
+    restart: unless-stopped
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+    ports:
+      - "${GATEWAY_PORT:-80}:80"          # All API traffic
+      - "${DASHBOARD_PORT:-8090}:8090"    # Traefik dashboard
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/config:/etc/traefik/config:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro   # Docker auto-discovery
+    environment:
+      - TZ=UTC
+    networks:
+      - experience_network
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`localhost`) && PathPrefix(`/dashboard`)"
+      - "traefik.http.routers.dashboard.entrypoints=traefik"
+
+  # ── JWT Validator (lightweight auth sidecar) ───────────────────────────────
+  # Validates Keycloak tokens and returns user identity headers.
+  # Traefik forwardAuth calls this before forwarding to microservices.
+  auth-validator:
+    build:
+      context: ./auth-validator
+      dockerfile: Dockerfile
+    container_name: experience_auth_validator
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_REALM_URL: ${KEYCLOAK_REALM_URL:-http://localhost:8080/realms/experience}
+      PORT: 9000
+    ports:
+      - "9100:9000"
+    networks:
+      - experience_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  experience_network:
+    name: experience_network
+    driver: bridge

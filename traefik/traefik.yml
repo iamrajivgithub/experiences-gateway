@@ -1,0 +1,58 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+#  Traefik Static Configuration — Experience API Gateway
+#  Tool     : Traefik v3.x
+#  Purpose  : Entry point for all microservice traffic
+#             - Routes requests to correct service
+#             - Validates Keycloak JWT tokens at the edge
+#             - Handles CORS, rate limiting, access logging
+#
+#  To replace with another tool (Kong, KrakenD, nginx):
+#    See docs/alternative-gateways.md
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# ── API / Dashboard ────────────────────────────────────────────────────────────
+api:
+  dashboard: true       # Traefik dashboard at http://localhost:8090/dashboard/
+  insecure: true        # OK for local dev — disable in production
+
+# ── Entry Points (ports Traefik listens on) ────────────────────────────────────
+entryPoints:
+  web:
+    address: ":80"              # All API traffic enters here
+
+  traefik:
+    address: ":8090"            # Dashboard and metrics port
+
+# ── Providers (where Traefik reads route config from) ─────────────────────────
+providers:
+  # File provider — routes defined in config/routes.yml
+  file:
+    directory: /etc/traefik/config
+    watch: true                 # Auto-reload on config file change
+
+  # Docker provider — auto-discover services from Docker labels
+  docker:
+    exposedByDefault: false     # Only expose services with traefik.enable=true label
+    network: experience_network # Docker network shared with all services
+
+# ── Logging ────────────────────────────────────────────────────────────────────
+log:
+  level: INFO                   # DEBUG | INFO | WARN | ERROR
+  format: json                  # json | common
+
+accessLog:
+  format: json
+  fields:
+    defaultMode: keep
+    names:
+      ClientUsername: drop
+    headers:
+      defaultMode: drop
+      names:
+        Authorization: drop     # Never log auth tokens
+
+# ── Metrics (Prometheus) ───────────────────────────────────────────────────────
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addServicesLabels: true
