@@ -81,9 +81,9 @@ http:
       service: notification-service
       priority: 10
 
-    # ── Lookup Service — public country/city + feature flags read ─────────────
+    # ── Lookup Service — public country/city + feature flags + stats ──────────
     lookup-public:
-      rule: "PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/features`)"
+      rule: "PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/features`) || PathPrefix(`/api/v1/stats`)"
       entryPoints: [web]
       middlewares: [cors, request-headers, rate-limit-public]
       service: lookup-service
