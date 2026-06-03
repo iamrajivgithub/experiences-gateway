@@ -57,7 +57,7 @@ http:
       priority: 15
 
     experience-availability:
-      rule: "PathPrefix(`/api/v1/experiences`) && PathRegexp(`/availability`)"
+      rule: "PathRegexp(`^/api/v1/experiences/[^/]+/availability`)"
       entryPoints: [web]
       middlewares: [cors, request-headers, rate-limit-public]
       service: booking-service
