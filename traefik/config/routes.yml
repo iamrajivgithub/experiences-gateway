@@ -33,16 +33,35 @@ http:
       service: booking-service
       priority: 10
 
-    # ── Availability — public batch check (used by search results page) ───────
-    # GET /api/v1/availability/slots?date=YYYY-MM-DD&experience_ids=id1,id2,...
-    # GET /api/v1/experiences/{id}/availability?month=YYYY-MM  (also routed here
-    #     because experience-service does NOT own availability — booking-service does)
+    # ── Availability — public endpoints, both routed to booking-service ─────────
+    #
+    # booking-service owns the availability table (PostgreSQL), so ALL
+    # availability queries must go there, not to experience-service.
+    #
+    # Two URL patterns are handled:
+    #
+    #   GET /api/v1/availability/slots
+    #       Batch check for multiple experiences on one date.
+    #       Used by search results page to show availability badges.
+    #
+    #   GET /api/v1/experiences/{id}/availability
+    #       Single-experience month calendar.
+    #       Used by the experience detail page availability section.
+    #       Higher priority (20) so it wins over the experience-public rule (10).
+    #
     availability-public:
       rule: "PathPrefix(`/api/v1/availability`)"
       entryPoints: [web]
       middlewares: [cors, request-headers, rate-limit-public]
       service: booking-service
       priority: 15
+
+    experience-availability:
+      rule: "PathPrefix(`/api/v1/experiences`) && PathRegexp(`/availability`)"
+      entryPoints: [web]
+      middlewares: [cors, request-headers, rate-limit-public]
+      service: booking-service
+      priority: 20
 
     # ── Auth — register is public, no JWT needed ─────────────────────────────
     auth-public:
