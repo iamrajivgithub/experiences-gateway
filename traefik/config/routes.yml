@@ -49,6 +49,15 @@ http:
     #       Used by the experience detail page availability section.
     #       Higher priority (20) so it wins over the experience-public rule (10).
     #
+    # Admin availability write — MUST be protected. Higher priority than the
+    # public availability rule so the admin path requires a valid JWT.
+    availability-admin:
+      rule: "PathPrefix(`/api/v1/availability/admin`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: booking-service
+      priority: 25
+
     availability-public:
       rule: "PathPrefix(`/api/v1/availability`)"
       entryPoints: [web]
