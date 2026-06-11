@@ -25,6 +25,14 @@ http:
       service: experience-service
       priority: 10
 
+    # ── Host (supplier) — protected; experience-service owns it ───────────────
+    host:
+      rule: "PathPrefix(`/api/v1/host`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: experience-service
+      priority: 20
+
     # ── Booking Service — always protected ───────────────────────────────────
     booking:
       rule: "PathPrefix(`/api/v1/bookings`) || PathPrefix(`/api/v1/payments`)"
