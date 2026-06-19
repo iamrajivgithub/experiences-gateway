@@ -17,7 +17,18 @@ http:
 
   routers:
 
-    # ── Experience Service — public read, protected write ─────────────────────
+    # ── Experience Service — protected WRITE (admin create/update/delete) ─────
+    # Method-aware: write verbs require a valid JWT so the gateway injects the
+    # X-User-* headers the service's require_admin depends on. Higher priority
+    # than experience-public so writes never fall through to the public rule.
+    experience-write:
+      rule: "(PathPrefix(`/api/v1/experiences`) || PathPrefix(`/api/v1/stays`) || PathPrefix(`/api/v1/dining`) || PathPrefix(`/api/v1/spa`) || PathPrefix(`/api/v1/catalog`)) && (Method(`POST`) || Method(`PUT`) || Method(`PATCH`) || Method(`DELETE`))"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: experience-service
+      priority: 30
+
+    # ── Experience Service — public READ (browse/detail) ──────────────────────
     experience-public:
       rule: "PathPrefix(`/api/v1/experiences`) || PathPrefix(`/api/v1/stays`) || PathPrefix(`/api/v1/dining`) || PathPrefix(`/api/v1/spa`) || PathPrefix(`/api/v1/catalog`)"
       entryPoints: [web]
@@ -112,7 +123,17 @@ http:
       service: search-service
       priority: 10
 
-    # ── Media Service — protected ─────────────────────────────────────────────
+    # ── Media Service — public READ of stored files (browser <img>/<video>) ───
+    # Stable, backend-agnostic delivery URL. Higher priority than the protected
+    # media rule so file reads don't require a JWT.
+    media-file:
+      rule: "PathPrefix(`/api/v1/media/file`)"
+      entryPoints: [web]
+      middlewares: [cors, media-headers, rate-limit-public]
+      service: media-service
+      priority: 20
+
+    # ── Media Service — protected (upload / delete / presigned) ───────────────
     media:
       rule: "PathPrefix(`/api/v1/media`)"
       entryPoints: [web]
@@ -128,17 +149,27 @@ http:
       service: notification-service
       priority: 10
 
-    # ── Lookup Service — public country/city + feature flags + stats ──────────
+    # ── Lookup Service — authenticated legal acceptance (member/host) ─────────
+    # Needs the X-User-* headers jwt-auth injects. Higher priority than the
+    # public legal rule so /legal/acceptance never falls through to it.
+    legal-acceptance:
+      rule: "PathPrefix(`/api/v1/legal/acceptance`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: lookup-service
+      priority: 25
+
+    # ── Lookup Service — public country/city + feature flags + legal + stats ──
     lookup-public:
-      rule: "PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/features`) || PathPrefix(`/api/v1/stats`)"
+      rule: "PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/features`) || PathPrefix(`/api/v1/legal`) || PathPrefix(`/api/v1/stats`)"
       entryPoints: [web]
       middlewares: [cors, request-headers, rate-limit-public]
       service: lookup-service
       priority: 10
 
-    # ── Lookup Service — admin (features + country/city management) ───────────
+    # ── Lookup Service — admin (features + country/city + types + legal mgmt) ─
     lookup-admin:
-      rule: "PathPrefix(`/api/v1/admin/features`) || PathPrefix(`/api/v1/admin/lookup`)"
+      rule: "PathPrefix(`/api/v1/admin/features`) || PathPrefix(`/api/v1/admin/lookup`) || PathPrefix(`/api/v1/admin/legal`)"
       entryPoints: [web]
       middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
       service: lookup-service
@@ -204,6 +235,17 @@ http:
           X-XSS-Protection: "1; mode=block"
           Referrer-Policy: "strict-origin-when-cross-origin"
           Cache-Control: "no-store"
+
+    # ── Media headers — same security headers but cacheable (static files) ────
+    media-headers:
+      headers:
+        customRequestHeaders:
+          X-Gateway: "experience-api-gateway"
+          X-Forwarded-Proto: "http"
+        customResponseHeaders:
+          X-Content-Type-Options: "nosniff"
+          Referrer-Policy: "strict-origin-when-cross-origin"
+          Cache-Control: "public, max-age=86400"
 
     # ── Rate Limiting — public routes ─────────────────────────────────────────
     rate-limit-public:
