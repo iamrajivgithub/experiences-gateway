@@ -54,7 +54,35 @@ http:
       service: experience-service
       priority: 20
 
+    # ── Stripe webhook (CHANGE 52) — PUBLIC, verified by Stripe signature ─────
+    # Must beat the JWT `booking` rule below so Stripe's unauthenticated POST
+    # reaches the service. Body is signature-checked in the handler.
+    payments-webhook:
+      rule: "PathPrefix(`/api/v1/payments/stripe/webhook`)"
+      entryPoints: [web]
+      middlewares: [cors, request-headers, rate-limit-public]
+      service: booking-service
+      priority: 25
+
+    # ── Payment config (CHANGE 52) — PUBLIC, lets the checkout offer card pay ─
+    payments-config:
+      rule: "PathPrefix(`/api/v1/payments/config`)"
+      entryPoints: [web]
+      middlewares: [cors, request-headers, rate-limit-public]
+      service: booking-service
+      priority: 25
+
+    # ── Admin finance settings (CHANGE 52) — JWT admin → booking-service ──────
+    finance-admin:
+      rule: "PathPrefix(`/api/v1/admin/finance`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: booking-service
+      priority: 25
+
     # ── Booking Service — always protected ───────────────────────────────────
+    # Covers /bookings + /payments (incl. Stripe intent & status); the public
+    # webhook/config rules above win for their exact paths.
     booking:
       rule: "PathPrefix(`/api/v1/bookings`) || PathPrefix(`/api/v1/payments`)"
       entryPoints: [web]
