@@ -99,6 +99,14 @@ http:
       service: user-service
       priority: 20
 
+    # ── User Service — public host profile (safe display fields only) ─────────
+    hosts-public:
+      rule: "PathPrefix(`/api/v1/hosts`)"
+      entryPoints: [web]
+      middlewares: [cors, request-headers, rate-limit-public]
+      service: user-service
+      priority: 20
+
     # ── User Service — always protected ──────────────────────────────────────
     user:
       rule: "PathPrefix(`/api/v1/users`)"
