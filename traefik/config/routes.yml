@@ -126,6 +126,24 @@ http:
       service: user-service
       priority: 25
 
+    # ── User Service — admin host ENTITIES list (link experiences) ─────────────
+    host-entities-admin:
+      rule: "PathPrefix(`/api/v1/admin/host-entities`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: user-service
+      priority: 25
+
+    # ── User Service — the signed-in host's own entity (portal top view) ───────
+    # JWT-protected; higher priority than the `host` router (→ experience-service)
+    # so /api/v1/host/entity resolves to user-service.
+    host-entity:
+      rule: "PathPrefix(`/api/v1/host/entity`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: user-service
+      priority: 30
+
     # ── User Service — always protected ──────────────────────────────────────
     user:
       rule: "PathPrefix(`/api/v1/users`)"
