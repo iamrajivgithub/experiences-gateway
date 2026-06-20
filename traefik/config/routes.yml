@@ -107,6 +107,25 @@ http:
       service: user-service
       priority: 20
 
+    # ── User Service — PUBLIC host application intake (CHANGE 49) ──────────────
+    # The /host/apply wizard is unauthenticated. Higher priority than the `host`
+    # router (20, → experience-service, JWT) so this exact path wins and stays
+    # public; every other /api/v1/host/* still routes to experience-service.
+    host-apply-public:
+      rule: "PathPrefix(`/api/v1/host/apply`)"
+      entryPoints: [web]
+      middlewares: [cors, request-headers, rate-limit-public]
+      service: user-service
+      priority: 30
+
+    # ── User Service — admin host application review (CHANGE 49) ───────────────
+    host-applications-admin:
+      rule: "PathPrefix(`/api/v1/admin/host-applications`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: user-service
+      priority: 25
+
     # ── User Service — always protected ──────────────────────────────────────
     user:
       rule: "PathPrefix(`/api/v1/users`)"
