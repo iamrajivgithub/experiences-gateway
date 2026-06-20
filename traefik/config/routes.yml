@@ -154,6 +154,16 @@ http:
       service: user-service
       priority: 30
 
+    # ── User Service — host team management (CHANGE 50) ───────────────────────
+    # Owned by user-service (host_users live there); beats the experience-service
+    # `host` router for this exact path.
+    host-team:
+      rule: "PathPrefix(`/api/v1/host/team`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: user-service
+      priority: 30
+
     # ── User Service — always protected ──────────────────────────────────────
     user:
       rule: "PathPrefix(`/api/v1/users`)"
