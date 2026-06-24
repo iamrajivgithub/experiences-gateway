@@ -1,4 +1,4 @@
-# experience-api-gateway
+# experiences-gateway
 
 API Gateway for the Experience Platform.
 Single entry point for all microservice traffic — handles routing, JWT validation, CORS, and rate limiting.
@@ -53,7 +53,7 @@ For protected routes, Traefik calls auth-validator first:
 ## Repository Structure
 
 ```
-experience-api-gateway/
+experiences-gateway/
 |-- docker-compose.yml              <- Traefik + auth-validator containers
 |-- .env.example                    <- configuration template
 |-- .gitignore
@@ -75,8 +75,8 @@ experience-api-gateway/
 ## Pre-Requisites
 
 - Docker Desktop running
-- Keycloak running (see experience-auth repository)
-- Microservices running (see experiences-api repository)
+- Keycloak running (see experiences-auth repository)
+- Microservices running (see experiences-services repository)
 
 ---
 
@@ -85,8 +85,8 @@ experience-api-gateway/
 ### Step 1 - Clone the Repository
 
 ```powershell
-git clone https://github.com/iamrajivgithub/experience-api-gateway
-cd experience-api-gateway
+git clone https://github.com/iamrajivgithub/experiences-gateway
+cd experiences-gateway
 ```
 
 ### Step 2 - Create .env File
@@ -177,7 +177,7 @@ Authorization: Bearer invalid-token
 | X-User-Email | User email | JWT email claim |
 | X-User-Roles | Comma-separated roles | JWT roles claim |
 | X-User-Name | Full name | JWT name claim |
-| X-Gateway | experience-api-gateway | Static |
+| X-Gateway | experiences-gateway | Static |
 
 ---
 
@@ -272,7 +272,7 @@ Migration checklist:
 
 | Repository | Purpose |
 |---|---|
-| experience-auth | Keycloak identity provider (https://github.com/iamrajivgithub/experience-auth) |
-| experience-shared-auth-middleware | Shared JWT library (https://github.com/iamrajivgithub/experience-shared-auth-middleware) |
-| experiences-api | All microservices (https://github.com/iamrajivgithub/experiences-api) |
-| experiences-databases | Database stack (https://github.com/iamrajivgithub/experiences-databases) |
+| experiences-auth | Keycloak identity provider (https://github.com/iamrajivgithub/experiences-auth) |
+| experiences-lib-auth | Shared JWT library (https://github.com/iamrajivgithub/experiences-lib-auth) |
+| experiences-services | All microservices (https://github.com/iamrajivgithub/experiences-services) |
+| experiences-data | Database stack (https://github.com/iamrajivgithub/experiences-data) |
