@@ -271,7 +271,7 @@ http:
 
     # ── Lookup Service — public country/city + feature flags + legal + stats ──
     lookup-public:
-      rule: "PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/features`) || PathPrefix(`/api/v1/legal`) || PathPrefix(`/api/v1/stats`)"
+      rule: "PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/features`) || PathPrefix(`/api/v1/feature-flags`) || PathPrefix(`/api/v1/legal`) || PathPrefix(`/api/v1/stats`)"
       entryPoints: [web]
       middlewares: [cors, request-headers, rate-limit-public]
       service: lookup-service
