@@ -65,6 +65,16 @@ http:
       service: user-service
       priority: 25
 
+    # ── Host entities — the signed-in host's own entity + team (Option C) ─────
+    # /api/v1/host-entities/me[/team] → user-service (JWT). Priority 25 beats the
+    # generic `host` rule (20). Canonical for /host/entity + /host/team*.
+    host-entities-canonical:
+      rule: "PathPrefix(`/api/v1/host-entities`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: user-service
+      priority: 25
+
     # ── Stripe webhook (CHANGE 52) — PUBLIC, verified by Stripe signature ─────
     # Must beat the JWT `booking` rule below so Stripe's unauthenticated POST
     # reaches the service. Body is signature-checked in the handler.
