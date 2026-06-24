@@ -118,6 +118,15 @@ http:
       service: booking-service
       priority: 25
 
+    # ── Finance settings (API canonicalization / Option C) — JWT admin ────────
+    # /api/v1/finance-settings → booking-service. Canonical for /admin/finance.
+    finance-settings-canonical:
+      rule: "PathPrefix(`/api/v1/finance-settings`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: booking-service
+      priority: 25
+
     # ── Booking Service — always protected ───────────────────────────────────
     # Covers /bookings + /payments (incl. Stripe intent & status); the public
     # webhook/config rules above win for their exact paths.
