@@ -72,6 +72,23 @@ http:
       service: booking-service
       priority: 25
 
+    # ── Canonical public payment paths (API canonicalization / Option C) ──────
+    # New top-level paths outside the protected /payments namespace. The old
+    # /payments/config + /payments/stripe/webhook rules above stay as aliases.
+    payment-config-canonical:
+      rule: "PathPrefix(`/api/v1/payment-config`)"
+      entryPoints: [web]
+      middlewares: [cors, request-headers, rate-limit-public]
+      service: booking-service
+      priority: 25
+
+    webhooks-stripe-canonical:
+      rule: "PathPrefix(`/api/v1/webhooks/stripe`)"
+      entryPoints: [web]
+      middlewares: [cors, request-headers, rate-limit-public]
+      service: booking-service
+      priority: 25
+
     # ── Admin finance settings (CHANGE 52) — JWT admin → booking-service ──────
     finance-admin:
       rule: "PathPrefix(`/api/v1/admin/finance`)"
