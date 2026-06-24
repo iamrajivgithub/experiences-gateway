@@ -292,6 +292,16 @@ http:
       service: media-service
       priority: 20
 
+    # ── Public file serving (API canonicalization / Option C) ─────────────────
+    # /api/v1/files/{type}/{object} → media-service (public). Canonical for
+    # /api/v1/media/file/*. Same media-headers (caching) middleware.
+    files-canonical:
+      rule: "PathPrefix(`/api/v1/files`)"
+      entryPoints: [web]
+      middlewares: [cors, media-headers, rate-limit-public]
+      service: media-service
+      priority: 20
+
     # ── Media Service — protected (upload / delete / presigned) ───────────────
     media:
       rule: "PathPrefix(`/api/v1/media`)"
