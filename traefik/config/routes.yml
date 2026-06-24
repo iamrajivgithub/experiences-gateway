@@ -219,6 +219,15 @@ http:
       service: user-service
       priority: 25
 
+    # ── User Service — admin user management (API canonicalization / Option C) ─
+    # /api/v1/admin/users[/*] → user-service. Canonical for /api/v1/users/admin/*.
+    admin-users:
+      rule: "PathPrefix(`/api/v1/admin/users`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: user-service
+      priority: 25
+
     # ── User Service — the signed-in host's own entity (portal top view) ───────
     # JWT-protected; higher priority than the `host` router (→ experience-service)
     # so /api/v1/host/entity resolves to user-service.
