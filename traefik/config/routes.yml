@@ -38,6 +38,16 @@ http:
       service: experience-service
       priority: 30
 
+    # ── Experience admin writes (API canonicalization / Option C) — JWT ───────
+    # /api/v1/admin/experiences[/{id}] → experience-service. Canonical for the
+    # admin write verbs on /api/v1/experiences (which remain as method-gated aliases).
+    experiences-admin-write:
+      rule: "PathPrefix(`/api/v1/admin/experiences`)"
+      entryPoints: [web]
+      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
+      service: experience-service
+      priority: 30
+
     # ── Experience Service — public READ (browse/detail) ──────────────────────
     experience-public:
       rule: "PathPrefix(`/api/v1/experiences`) || PathPrefix(`/api/v1/stays`) || PathPrefix(`/api/v1/dining`) || PathPrefix(`/api/v1/spa`) || PathPrefix(`/api/v1/catalog`)"
