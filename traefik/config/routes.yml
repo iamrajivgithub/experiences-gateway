@@ -320,7 +320,7 @@ http:
     request-headers:
       headers:
         customRequestHeaders:
-          X-Gateway: "experience-api-gateway"
+          X-Gateway: "experiences-gateway"
           X-Forwarded-Proto: "http"
         customResponseHeaders:
           X-Content-Type-Options: "nosniff"
@@ -333,7 +333,7 @@ http:
     media-headers:
       headers:
         customRequestHeaders:
-          X-Gateway: "experience-api-gateway"
+          X-Gateway: "experiences-gateway"
           X-Forwarded-Proto: "http"
         customResponseHeaders:
           X-Content-Type-Options: "nosniff"

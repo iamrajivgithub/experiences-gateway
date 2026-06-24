@@ -317,7 +317,7 @@ sequenceDiagram
 
     C->>T: GET /api/v1/experiences?category=stay
     Note over T: Apply middleware:<br/>CORS ✓<br/>Rate limit (100/s by IP) ✓<br/>Add X-Gateway header ✓
-    T->>E: GET /api/v1/experiences?category=stay<br/>X-Gateway: experience-api-gateway
+    T->>E: GET /api/v1/experiences?category=stay<br/>X-Gateway: experiences-gateway
     E->>M: db.experiences.find({category:"stay", is_active:true})
     M-->>E: [ ...experience documents ]
     E-->>T: 200 { data: [...], total: 42, page: 1 }
