@@ -54,6 +54,17 @@ http:
       service: experience-service
       priority: 20
 
+    # ── Host application intake (API canonicalization / Option C) — PUBLIC ─────
+    # POST /api/v1/host-applications → user-service. Priority 25 beats the generic
+    # `host` rule (priority 20), which also string-matches this prefix. Canonical
+    # alias of the public /api/v1/host/apply intake.
+    host-applications-public:
+      rule: "PathPrefix(`/api/v1/host-applications`)"
+      entryPoints: [web]
+      middlewares: [cors, request-headers, rate-limit-public]
+      service: user-service
+      priority: 25
+
     # ── Stripe webhook (CHANGE 52) — PUBLIC, verified by Stripe signature ─────
     # Must beat the JWT `booking` rule below so Stripe's unauthenticated POST
     # reaches the service. Body is signature-checked in the handler.
