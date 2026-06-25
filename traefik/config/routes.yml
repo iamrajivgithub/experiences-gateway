@@ -85,27 +85,10 @@ http:
       service: user-service
       priority: 25
 
-    # ── Stripe webhook (CHANGE 52) — PUBLIC, verified by Stripe signature ─────
-    # Must beat the JWT `booking` rule below so Stripe's unauthenticated POST
-    # reaches the service. Body is signature-checked in the handler.
-    payments-webhook:
-      rule: "PathPrefix(`/api/v1/payments/stripe/webhook`)"
-      entryPoints: [web]
-      middlewares: [cors, request-headers, rate-limit-public]
-      service: booking-service
-      priority: 25
-
-    # ── Payment config (CHANGE 52) — PUBLIC, lets the checkout offer card pay ─
-    payments-config:
-      rule: "PathPrefix(`/api/v1/payments/config`)"
-      entryPoints: [web]
-      middlewares: [cors, request-headers, rate-limit-public]
-      service: booking-service
-      priority: 25
-
-    # ── Canonical public payment paths (API canonicalization / Option C) ──────
-    # New top-level paths outside the protected /payments namespace. The old
-    # /payments/config + /payments/stripe/webhook rules above stay as aliases.
+    # ── Public payment paths (API canonicalization / Option C) ────────────────
+    # Top-level public paths outside the protected /payments namespace. Must beat
+    # the JWT `booking` rule below — Stripe's webhook POST is unauthenticated and
+    # signature-verified in the handler, not by JWT.
     payment-config-canonical:
       rule: "PathPrefix(`/api/v1/payment-config`)"
       entryPoints: [web]
@@ -117,14 +100,6 @@ http:
       rule: "PathPrefix(`/api/v1/webhooks/stripe`)"
       entryPoints: [web]
       middlewares: [cors, request-headers, rate-limit-public]
-      service: booking-service
-      priority: 25
-
-    # ── Admin finance settings (CHANGE 52) — JWT admin → booking-service ──────
-    finance-admin:
-      rule: "PathPrefix(`/api/v1/admin/finance`)"
-      entryPoints: [web]
-      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
       service: booking-service
       priority: 25
 
@@ -179,13 +154,6 @@ http:
       service: booking-service
       priority: 15
 
-    experience-availability:
-      rule: "PathRegexp(`^/api/v1/experiences/[^/]+/availability`)"
-      entryPoints: [web]
-      middlewares: [cors, request-headers, rate-limit-public]
-      service: booking-service
-      priority: 20
-
     # ── Auth — register is public, no JWT needed ─────────────────────────────
     auth-public:
       rule: "PathPrefix(`/api/v1/auth`)"
@@ -201,17 +169,6 @@ http:
       middlewares: [cors, request-headers, rate-limit-public]
       service: user-service
       priority: 20
-
-    # ── User Service — PUBLIC host application intake (CHANGE 49) ──────────────
-    # The /host/apply wizard is unauthenticated. Higher priority than the `host`
-    # router (20, → experience-service, JWT) so this exact path wins and stays
-    # public; every other /api/v1/host/* still routes to experience-service.
-    host-apply-public:
-      rule: "PathPrefix(`/api/v1/host/apply`)"
-      entryPoints: [web]
-      middlewares: [cors, request-headers, rate-limit-public]
-      service: user-service
-      priority: 30
 
     # ── User Service — admin host application review (CHANGE 49) ───────────────
     host-applications-admin:
@@ -238,26 +195,6 @@ http:
       service: user-service
       priority: 25
 
-    # ── User Service — the signed-in host's own entity (portal top view) ───────
-    # JWT-protected; higher priority than the `host` router (→ experience-service)
-    # so /api/v1/host/entity resolves to user-service.
-    host-entity:
-      rule: "PathPrefix(`/api/v1/host/entity`)"
-      entryPoints: [web]
-      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
-      service: user-service
-      priority: 30
-
-    # ── User Service — host team management (CHANGE 50) ───────────────────────
-    # Owned by user-service (host_users live there); beats the experience-service
-    # `host` router for this exact path.
-    host-team:
-      rule: "PathPrefix(`/api/v1/host/team`)"
-      entryPoints: [web]
-      middlewares: [cors, jwt-auth, request-headers, rate-limit-auth]
-      service: user-service
-      priority: 30
-
     # ── User Service — always protected ──────────────────────────────────────
     user:
       rule: "PathPrefix(`/api/v1/users`)"
@@ -281,16 +218,6 @@ http:
       middlewares: [cors, request-headers, rate-limit-public]
       service: search-service
       priority: 10
-
-    # ── Media Service — public READ of stored files (browser <img>/<video>) ───
-    # Stable, backend-agnostic delivery URL. Higher priority than the protected
-    # media rule so file reads don't require a JWT.
-    media-file:
-      rule: "PathPrefix(`/api/v1/media/file`)"
-      entryPoints: [web]
-      middlewares: [cors, media-headers, rate-limit-public]
-      service: media-service
-      priority: 20
 
     # ── Public file serving (API canonicalization / Option C) ─────────────────
     # /api/v1/files/{type}/{object} → media-service (public). Canonical for
@@ -330,7 +257,7 @@ http:
 
     # ── Lookup Service — public country/city + feature flags + legal + stats ──
     lookup-public:
-      rule: "PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/features`) || PathPrefix(`/api/v1/feature-flags`) || PathPrefix(`/api/v1/legal`) || PathPrefix(`/api/v1/stats`)"
+      rule: "PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/feature-flags`) || PathPrefix(`/api/v1/legal`) || PathPrefix(`/api/v1/stats`)"
       entryPoints: [web]
       middlewares: [cors, request-headers, rate-limit-public]
       service: lookup-service
